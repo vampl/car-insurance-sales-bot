@@ -22,7 +22,7 @@ MindeeOptions mindeeOptions =
     new()
     {
         ApiKey =
-            configuration["MindeeOptions:ApiKey"] ??
+            configuration["Mindee:ApiKey"] ??
             throw new InvalidOperationException(message: "Mindee API key is missing")
     };
 
