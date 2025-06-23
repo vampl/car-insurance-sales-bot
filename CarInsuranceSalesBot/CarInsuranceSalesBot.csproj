@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="appsettings.json" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"/>
+        <Content Include="appsettings.json" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
     <ItemGroup>
