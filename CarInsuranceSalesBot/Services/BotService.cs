@@ -8,8 +8,6 @@ namespace CarInsuranceSalesBot.Services;
 
 public class BotService
 {
-    private readonly CancellationTokenSource _cts = new();
-
     private readonly ITelegramBotClient _botClient;
 
     private readonly UserSessionManager _sessionManager;
@@ -20,26 +18,26 @@ public class BotService
         TelegramBotOptions options,
         UserSessionManager sessionManager,
         MindeeOcrService ocrService,
-        PdfPolicyGenerationService pdfPolicyGenerationService)
+        PdfPolicyGenerationService pdfPolicyGenerationService,
+        CancellationToken cancellationToken)
     {
         _sessionManager = sessionManager;
         _ocrService = ocrService;
         _pdfPolicyGenerationService = pdfPolicyGenerationService;
 
-        _botClient = new TelegramBotClient(token: options.BotToken, cancellationToken: _cts.Token);
+        _botClient = new TelegramBotClient(token: options.BotToken, cancellationToken: cancellationToken);
     }
 
     public async Task StartAsync()
     {
         // looking for initialized bot information
-        User botInfo = await _botClient.GetMe(cancellationToken: _cts.Token);
+        User botInfo = await _botClient.GetMe();
         Console.WriteLine(value: $"Bot started as @{botInfo.Username} with {botInfo.Id}");
 
         // setting handlers for update and exception flows
         _botClient.StartReceiving(
             updateHandler: HandleUpdateAsync,
-            errorHandler: ErrorHandlerAsync,
-            cancellationToken: _cts.Token);
+            errorHandler: ErrorHandlerAsync);
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken cancellationToken)
