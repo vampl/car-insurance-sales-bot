@@ -8,6 +8,7 @@ using Mindee.Parsing.Common;
 using Mindee.Product.Generated;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CarInsuranceSalesBot.Services;
 
@@ -29,10 +30,15 @@ public class MindeeOcrService
                 new LocalInputSource(passportStream, "passport.jpg"),
                 passportEndpoint);
 
+        JObject root = JObject.Parse((await passportOcrTask).RawResponse);
+        JToken prediction =
+            root["document"]?["inference"]?["prediction"] ??
+            throw new InvalidOperationException("No data in response scheme");
+
         MindeeDataExtractionResponse.Passport passportData =
-            JsonConvert.DeserializeObject<MindeeDataExtractionResponse.Passport>(
-                (await passportOcrTask).Document.Inference.Prediction.ToString()) ??
-            throw new InvalidOperationException("Deserialization returned nullable passport");
+            prediction.ToObject<MindeeDataExtractionResponse.Passport>() ??
+            throw new InvalidOperationException(
+                "DeserializatipassportEndpointon returned nullable passport");
 
         return passportData;
     }
@@ -41,16 +47,21 @@ public class MindeeOcrService
     {
         var vehicleEndpoint = new CustomEndpoint("vampl", "vehicle_id", "v1");
 
-        Task<AsyncPredictResponse<GeneratedV1>> vehicleIdOcrTask =
+        Task<AsyncPredictResponse<GeneratedV1>>? vehicleIdOcrTask =
             _client.EnqueueAndParseAsync<GeneratedV1>(
                 new LocalInputSource(vehicleIdStream, "vehicleId.jpg"),
-                vehicleEndpoint);
+                passportEndpoint);
 
-        MindeeDataExtractionResponse.VehicleId? vehicleIdData =
-            JsonConvert.DeserializeObject<MindeeDataExtractionResponse.VehicleId>(
-                (await vehicleIdOcrTask).Document.Inference.Prediction.ToString()) ??
-            throw new InvalidOperationException("Deserialization returned nullable vehicle id");
+        JObject root = JObject.Parse((await vehicleIdOcrTask).RawResponse);
+        JToken prediction =
+            root["document"]?["inference"]?["prediction"] ??
+            throw new InvalidOperationException("No data in response scheme");
 
-        return vehicleIdData;
+        MindeeDataExtractionResponse.VehicleId passportData =
+            prediction.ToObject<MindeeDataExtractionResponse.VehicleId>() ??
+            throw new InvalidOperationException(
+                "DeserializatipassportEndpointon returned nullable passport");
+
+        return passportData;
     }
 }
