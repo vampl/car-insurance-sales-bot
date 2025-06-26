@@ -27,7 +27,7 @@ public class MindeeDataExtractionResponse
         public required PredictionField DateOfBirth { get; set; }
 
         public required PredictionField DateOfExpiry { get; set; }
-
+        
         public required PredictionField Nationality { get; set; }
     }
     
@@ -51,7 +51,7 @@ public class MindeeDataExtractionResponse
         public required PredictionField ColorOfVehicle { get; set; }
     }
 
-    public required Passport ExtractedPassportData { get; set; }
-    
-    public required VehicleId ExtractedVehicleIdData { get; set; }
+    public Passport ExtractedPassportData { get; set; } = null!;
+
+    public VehicleId ExtractedVehicleIdData { get; set; } = null!;
 }
