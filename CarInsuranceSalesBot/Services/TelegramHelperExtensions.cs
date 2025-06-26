@@ -6,14 +6,7 @@ namespace CarInsuranceSalesBot.Services;
 
 public static class TelegramHelperExtensions
 {
-    public static async Task SendMessageAsync(
-        this ITelegramBotClient bot,
-        long chatId,
-        string text,
-        CancellationToken cancellationToken) =>
-        await bot.SendMessage(chatId, text, cancellationToken: cancellationToken);
-
-    public static async Task SendKeyboardAsync(
+    public static async Task SendMessageWithKeyboard(
         this ITelegramBotClient bot,
         long chatId,
         string text,
@@ -24,7 +17,7 @@ public static class TelegramHelperExtensions
         await bot.SendMessage(chatId, text, replyMarkup: markup, cancellationToken: cancellationToken);
     }
 
-    public static async Task<MemoryStream> DownloadTelegramFileAsync(
+    public static async Task<MemoryStream> DownloadFile(
         this ITelegramBotClient bot,
         string fileId,
         CancellationToken cancellationToken)
@@ -38,7 +31,7 @@ public static class TelegramHelperExtensions
         return memoryStream;
     }
 
-    public static async Task SendDocumentAsync(
+    public static async Task SendDocument(
         this ITelegramBotClient bot,
         long chatId,
         Stream file,
