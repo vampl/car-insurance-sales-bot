@@ -23,7 +23,7 @@ public class MindeeOcrService
 
     public async Task<MindeeDataExtractionResponse.Passport> ExtractPassportAsync(MemoryStream passportStream)
     {
-        CustomEndpoint passportEndpoint = new("vampl", "passport", "v1");
+        CustomEndpoint passportEndpoint = new(endpointName: "passport", accountName: "vampl", "v1");
 
         Task<AsyncPredictResponse<GeneratedV1>>? passportOcrTask =
             _client.EnqueueAndParseAsync<GeneratedV1>(
@@ -45,7 +45,7 @@ public class MindeeOcrService
 
     public async Task<MindeeDataExtractionResponse.VehicleId> ExtractVehicleIdAsync(MemoryStream vehicleIdStream)
     {
-        var vehicleEndpoint = new CustomEndpoint("vampl", "vehicle_id", "v1");
+        CustomEndpoint passportEndpoint = new(endpointName: "vehicle_id", accountName: "vampl", "v1");
 
         Task<AsyncPredictResponse<GeneratedV1>>? vehicleIdOcrTask =
             _client.EnqueueAndParseAsync<GeneratedV1>(
