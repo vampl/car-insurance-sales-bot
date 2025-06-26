@@ -8,7 +8,7 @@ public class UserSession(long userId)
 
     public MemoryStream VehicleIdImageStream { get; set; } = null!;
 
-    public MindeeDataExtractionResponse MindeeDataExtractionResponse { get; set; } = null!;
+    public MindeeDataExtractionResponse MindeeDataExtractionResponse { get; set; } = new();
 
     public required int Step { get; set; }
 }
