@@ -117,6 +117,10 @@ public class BotService
 
         try
         {
+            await bot.SendMessage(
+                session.UserId,
+                "✅ Got your passport! Scrapping required data from photo...\n",
+                cancellationToken: cancellationToken);
             session.MindeeDataExtractionResponse.ExtractedPassportData =
                 await _ocrService.ExtractPassportAsync(session.PassportImageStream);
         }
@@ -132,8 +136,9 @@ public class BotService
 
         await bot.SendMessage(
             session.UserId,
-            "✅ Got your passport!\nNow please send a photo of your vehicle ID document.",
+            "Done! Now please send a photo of your vehicle ID document.",
             cancellationToken: cancellationToken);
+
         session.Step++;
     }
 
@@ -171,6 +176,10 @@ public class BotService
 
         try
         {
+            await bot.SendMessage(
+                session.UserId,
+                "✅ Got your vehicle ID! Scrapping required data from photo... ",
+                cancellationToken: cancellationToken);
             session.MindeeDataExtractionResponse.ExtractedVehicleIdData =
                 await _ocrService.ExtractVehicleIdAsync(session.VehicleIdImageStream);
         }
@@ -186,7 +195,7 @@ public class BotService
 
         await bot.SendMessage(
             session.UserId,
-            "✅ Got your vehicle ID!\nPlease give me a moment to process everything...",
+            "Done! There is your documents summary: ",
             cancellationToken: cancellationToken);
 
         string summaryText = BuildSummaryText(session.MindeeDataExtractionResponse);
