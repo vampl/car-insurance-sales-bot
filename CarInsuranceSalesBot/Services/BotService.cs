@@ -202,11 +202,11 @@ public class BotService
     {
         Console.WriteLine(
             $"""
-             [{DateTimeOffset.UtcNow}]: {exception.Message}
+             [{DateTimeOffset.Now:dd.MM.yyyy HH:mm:ss}]: {exception.Message}
 
              {exception.StackTrace}
              """);
-        
+
         return Task.CompletedTask;
     }
 }
