@@ -44,4 +44,4 @@ BotService service =
 // start application core service
 await service.StartAsync();
 
-Console.ReadLine();
+await Task.Delay(Timeout.Infinite);
