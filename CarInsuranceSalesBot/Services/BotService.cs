@@ -253,6 +253,7 @@ public class BotService
                     "insurance_policy.pdf",
                     "Congratulation, there is your insurance policy",
                     cancellationToken: cancellationToken);
+                session.Step = 0;
                 break;
 
             case "❌ No":
