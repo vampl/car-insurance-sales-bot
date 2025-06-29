@@ -33,7 +33,7 @@ car-insurance-sales-bot/
 
 ### 1. Prerequisites
 
-- [.NET 7.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
 - A [Telegram Bot Token](https://t.me/BotFather)
 - [Mindee API Key](https://www.mindee.com/)
 
