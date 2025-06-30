@@ -4,3 +4,6 @@
     build:
       context: .
       dockerfile: ./Dockerfile
+    environment:
+      - TelegramBotToken
+      - Mindee__ApiKey
