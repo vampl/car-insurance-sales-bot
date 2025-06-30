@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 IConfiguration configuration =
     new ConfigurationBuilder()
         .SetBasePath(basePath: Directory.GetCurrentDirectory())
-        .AddJsonFile(path: "appsettings.json", optional: false, reloadOnChange: true)
+        .AddEnvironmentVariables()
         .Build();
 
 // setup services options
