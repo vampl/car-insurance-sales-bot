@@ -1,134 +1,122 @@
-﻿
 # 🚗 Car Insurance Sales Bot
 
-A Telegram bot written in C# (.NET) that guides users through a car insurance purchase process. It accepts passport and vehicle ID images, extracts relevant data using OCR (via Mindee API), confirms details, and generates a downloadable insurance policy as a PDF.
+A Telegram bot built with .NET that guides users through the car insurance purchase process. Users upload their passport and vehicle ID images, and the bot uses OCR (via Mindee API) to extract key data, confirm details, and generate a downloadable insurance policy PDF.
 
 ---
 
-## 📦 Project Structure
+## 📁 Project Structure
 
 ```
 car-insurance-sales-bot/
-├── DiceusTestAssigment.sln                  # Solution file
+├── DiceusTestAssigment.sln               # Solution file
+├── docker-compose.yml                    # Docker Compose setup
 └── CarInsuranceSalesBot/
-    ├── Program.cs                           # Entry point
-    ├── appsettings.json                     # Configuration (API keys, etc.)
+    ├── Program.cs                        # Entry point
     ├── Models/
-    │   ├── MindeeDataExtractionResponse.cs
-    │   └── UserSession.cs
     ├── Options/
-    │   ├── MindeeOptions.cs
-    │   └── TelegramBotOptions.cs
     ├── Services/
-    │   ├── BotService.cs                    # Core bot logic and routing
-    │   ├── MindeeOcrService.cs             # OCR integration
-    │   ├── PdfPolicyGeneratorService.cs    # PDF generation
-    │   ├── TelegramHelperExtensions.cs     # Utility extensions
-    │   └── UserSessionManager.cs           # Tracks user progress
+    └── ...
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ Getting Started
 
-### 1. Prerequisites
+### ✅ Requirements
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+- [Docker](https://www.docker.com/)
 - A [Telegram Bot Token](https://t.me/BotFather)
-- [Mindee API Key](https://www.mindee.com/)
+- A [Mindee API Key](https://platform.mindee.com/)
 
-### 2. Clone the Repository
+### 🚀 Run the Bot
 
-```bash
-git clone https://github.com/vampl/car-insurance-sales-bot.git
-cd car-insurance-sales-bot/CarInsuranceSalesBot
-```
+1. **Clone the repository**:
 
-### 3. Configure `appsettings.json`
+   ```bash
+   git clone https://github.com/vampl/car-insurance-sales-bot.git
+   cd car-insurance-sales-bot
+   ```
 
-```json
-{
-  "TelegramBot": {
-    "Token": "YOUR_TELEGRAM_BOT_TOKEN"
-  },
-  "Mindee": {
-    "ApiKey": "YOUR_MINDEE_API_KEY"
-  }
-}
-```
+2. **Start the bot using Docker Compose**:
 
-### 4. Run the Bot
+   ```bash
+   docker compose run \
+     -e TelegramBotToken=YOUR_TELEGRAM_BOT_TOKEN \
+     -e Mindee__ApiKey=YOUR_MINDEE_API_KEY \
+     bot
+   ```
 
-```bash
-dotnet run
-```
+   > Replace `YOUR_TELEGRAM_BOT_TOKEN` and `YOUR_MINDEE_API_KEY` with your real credentials.
+
+✅ Done! Your bot should now be running and available on Telegram.
 
 ---
 
-## 🧠 Bot Workflow
+## 🤖 Bot Workflow
 
-1. **Greeting**
-    - `/start` triggers a welcome message and a prompt to upload a passport image.
+1. **Start**
+   - User sends `/start`
+   - Bot asks for a passport photo
 
-2. **Document Uploads**
-    - The user uploads:
-        - A **passport photo**
-        - A **vehicle ID document**
+2. **Document Upload**
+   - User sends:
+     - Passport photo
+     - Vehicle ID document
 
-3. **OCR Processing**
-    - `MindeeOcrService` extracts key fields from the uploaded images.
-    - Extracted fields include:
-        - **Passport**: Full name, sex, date of birth, nationality, issue date
-        - **Vehicle ID**: Registration number, first registration, make & model, color
+3. **OCR & Data Extraction**
+   - Mindee API extracts:
+     - **Passport**: Name, birth date, nationality, etc.
+     - **Vehicle**: Make, model, registration, color, etc.
 
-4. **Confirmation & Price**
-    - The bot displays the parsed data and asks for user confirmation.
-    - Once confirmed, the bot provides an insurance price.
+4. **Confirmation**
+   - Bot shows extracted data and asks for user confirmation
 
-5. **Policy Generation**
-    - On payment confirmation (simulated), the bot uses `PdfPolicyGeneratorService` to generate a PDF policy and sends it to the user.
+5. **Pricing & Policy**
+   - Bot provides a quote
+   - On confirmation, it generates and sends a policy PDF
 
 6. **Error Handling**
-    - If OCR fails or data is incomplete, the user is asked to re-upload documents.
+   - If OCR fails or data is incomplete, the bot will prompt for re-upload
 
 ---
 
 ## 💬 Example Interaction
 
 ```plaintext
-👤 User: /start
-🤖 Bot: Hello! Please send your passport photo.
-👤 User: [uploads passport]
-🤖 Bot: ✅ Passport received. Processing...
-🤖 Bot: Now send your vehicle ID.
-👤 User: [uploads vehicle ID]
-🤖 Bot: ✅ Vehicle ID received.
-🤖 Bot: Here’s what I found:
+👤 /start  
+🤖 Please send your passport photo.  
+👤 [uploads passport]  
+🤖 ✅ Received. Now send your vehicle ID.  
+👤 [uploads vehicle ID]  
+🤖 ✅ Here's what I found:
     👤 Name: ТКАЧЕНКО МАР'ЯНА ІВАНІВНА
     🚗 Vehicle: TOYOTA CAMRY, Color: ЧОРНИЙ
-🤖 Bot: Confirm?
-👤 User: ✅ Yes
-🤖 Bot: Price: 100 USD. Proceed?
-👤 User: ✅ Yes
-🤖 Bot: 🎉 Here is your policy: `insurance_policy.pdf`
+🤖 Confirm?  
+👤 ✅ Yes  
+🤖 Price: 100 USD. Proceed?  
+👤 ✅ Yes  
+🤖 🎉 Here is your policy: `insurance_policy.pdf`
 ```
 
 ---
 
 ## 📌 Notes
 
-- Mindee OCR is used for reliable structured data extraction.
-- Telegram Bot API is used via `Telegram.Bot` NuGet package.
-- PDF creation handled via standard .NET libraries.
+- OCR is powered by [Mindee](https://www.mindee.com/)
+- Telegram integration via [`Telegram.Bot`](https://github.com/TelegramBots/Telegram.Bot)
+- PDF generation uses native .NET libraries
+- Configuration is passed via environment variables (no config files required)
 
 ---
 
-## 🧑‍💻 Author
+## 👨‍💻 Author
 
 **Vitalii Barabash**
+
+[GitHub](https://github.com/vampl)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+MIT License. See `LICENSE` for details.
