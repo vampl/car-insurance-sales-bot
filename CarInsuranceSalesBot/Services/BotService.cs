@@ -324,9 +324,10 @@ public class BotService
                 cancellationToken: cancellationToken);
 
             string summary = BuildSummaryText(session.MindeeDataExtractionResponse);
-            await bot.SendMessage(
+            await bot.SendMessageWithKeyboard(
                 session.UserId,
                 summary,
+                [[new KeyboardButton("✅ Yes"), new KeyboardButton("❌ No")]],
                 cancellationToken: cancellationToken);
 
             session.Step++;
