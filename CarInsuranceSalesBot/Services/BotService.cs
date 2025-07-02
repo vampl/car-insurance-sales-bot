@@ -58,19 +58,25 @@ public class BotService
         switch (session.Step)
         {
             case 0:
-                await HandleStep0(bot, session, cancellationToken);
+                await HandleStartStep0(bot, session, cancellationToken);
                 break;
             case 1:
-                await HandleStep1(bot, update, session, cancellationToken);
+                await HandlePassportObtainingStep1(bot, update, session, cancellationToken);
                 break;
             case 2:
-                await HandleStep2(bot, update, session, cancellationToken);
+                await HandlePassportConfirmationStep2(bot, update, session, cancellationToken);
                 break;
             case 3:
-                await HandleStep3(bot, update, session, cancellationToken);
+                await HandleVehicleIdObtainingStep3(bot, update, session, cancellationToken);
                 break;
             case 4:
-                await HandleStep4(bot, update, session, cancellationToken);
+                await HandleVehicleIdConfirmationStep4(bot, update, session, cancellationToken);
+                break;
+            case 5:
+                await HandleSummaryConfirmationStep5(bot, update, session, cancellationToken);
+                break;
+            case 6:
+                await HandleFinalConfirmationStep6(bot, update, session, cancellationToken);
                 break;
         }
     }
@@ -118,7 +124,7 @@ public class BotService
         await bot.SendMessage(chatId, response, cancellationToken: cancellationToken);
     }
 
-    private async Task HandleStep0(
+    private async Task HandleStartStep0(
         ITelegramBotClient bot,
         UserSession session,
         CancellationToken cancellationToken)
@@ -134,7 +140,7 @@ public class BotService
         session.Step++;
     }
 
-    private async Task HandleStep1(
+    private async Task HandlePassportObtainingStep1(
         ITelegramBotClient bot,
         Update update,
         UserSession session,
@@ -144,7 +150,7 @@ public class BotService
         {
             await bot.SendMessage(
                 session.UserId,
-                "📸 Please send a photo of your passport to continue.",
+                "📸 Please send a photo of your passport.",
                 cancellationToken: cancellationToken);
             return;
         }
@@ -155,45 +161,76 @@ public class BotService
                 await bot.DownloadFile(
                     update.Message.Photo[^1].FileId,
                     cancellationToken: cancellationToken);
-        }
-        catch (Exception)
-        {
+
             await bot.SendMessage(
                 session.UserId,
-                "⚠️ Hmm, I couldn't download the passport image. Please try sending it again.",
-                cancellationToken: cancellationToken);
-
-            return;
-        }
-
-        try
-        {
-            await bot.SendMessage(
-                session.UserId,
-                "✅ Got your passport! Scrapping required data from photo...\n",
+                "✅ Got your passport! Reading data, wait a minute",
                 cancellationToken: cancellationToken);
             session.MindeeDataExtractionResponse.ExtractedPassportData =
                 await _ocrService.ExtractPassportAsync(session.PassportImageStream);
+
+            MindeeDataExtractionResponse.Passport passport = session.MindeeDataExtractionResponse.ExtractedPassportData;
+            string text =
+                $"""
+                 📄 Passport Information:
+                 👤 Name: {passport.Surname.Value} {passport.Name.Value} {passport.Patronymic.Value}
+                 🆔 Record No: {passport.RecordNo.Value}
+                 🎂 DOB: {passport.DateOfBirth.Value}
+                 👫 Sex: {passport.Sex.Value}
+                 📅 Issued: {passport.DateOfExpiry.Value}
+                 🌍 Nationality: {passport.Nationality.Value}
+
+                 Is this correct?
+                 """;
+
+            await bot.SendMessageWithKeyboard(
+                session.UserId,
+                text,
+                [[new KeyboardButton("✅ Yes"), new KeyboardButton("❌ No")]],
+                cancellationToken);
+            session.Step++;
         }
-        catch (Exception)
+        catch
         {
             await bot.SendMessage(
                 session.UserId,
-                "⚠️ I had trouble reading your passport. Make sure the photo is clear and all text is visible.",
+                "⚠️ I had trouble reading the passport. Try again.",
                 cancellationToken: cancellationToken);
-
-            return;
         }
-
-        await bot.SendMessage(
-            session.UserId,
-            "Done! Now please send a photo of your vehicle ID document.",
-            cancellationToken: cancellationToken);
-
-        session.Step++;
     }
 
-    private async Task HandleStep2(
+    private async Task HandlePassportConfirmationStep2(
+        ITelegramBotClient bot,
+        Update update,
+        UserSession session,
+        CancellationToken cancellationToken)
+    {
+        switch (update.Message?.Text)
+        {
+            case "✅ Yes":
+                await bot.SendMessage(
+                    session.UserId,
+                    "Now please send a photo of your vehicle ID document.",
+                    cancellationToken: cancellationToken);
+                session.Step++;
+                break;
+            case "❌ No":
+                await bot.SendMessage(
+                    session.UserId,
+                    "Please send your passport photo again.",
+                    cancellationToken: cancellationToken);
+                session.Step = 1;
+                break;
+            default:
+                await bot.SendMessage(
+                    session.UserId,
+                    "Please confirm passport data with ✅ Yes or ❌ No.",
+                    cancellationToken: cancellationToken);
+                break;
+        }
+    }
+
+    private async Task HandleVehicleIdObtainingStep3(
         ITelegramBotClient bot,
         Update update,
         UserSession session,
@@ -203,64 +240,92 @@ public class BotService
         {
             await bot.SendMessage(
                 session.UserId,
-                "📸 Please send a photo of your vehicle ID to proceed.",
+                "📸 Please send a photo of your vehicle ID.",
                 cancellationToken: cancellationToken);
             return;
         }
 
         try
         {
-            session.VehicleIdImageStream =
-                await bot.DownloadFile(
-                    update.Message.Photo[^1].FileId,
-                    cancellationToken: cancellationToken);
-        }
-        catch (Exception)
-        {
+            session.VehicleIdImageStream = await bot.DownloadFile(update.Message.Photo[^1].FileId, cancellationToken);
             await bot.SendMessage(
                 session.UserId,
-                "⚠️ I couldn't download the vehicle ID image. Could you try sending it again?",
+                "✅ Got your vehicle ID! Reading data...",
                 cancellationToken: cancellationToken);
 
-            return;
-        }
-
-        try
-        {
-            await bot.SendMessage(
-                session.UserId,
-                "✅ Got your vehicle ID! Scrapping required data from photo... ",
-                cancellationToken: cancellationToken);
             session.MindeeDataExtractionResponse.ExtractedVehicleIdData =
                 await _ocrService.ExtractVehicleIdAsync(session.VehicleIdImageStream);
+
+            MindeeDataExtractionResponse.VehicleId
+                vehicle = session.MindeeDataExtractionResponse.ExtractedVehicleIdData;
+            string text =
+                $"""
+                 🚗 Vehicle Information:
+                 🔢 Reg Number: {vehicle.RegistrationNumber.Value}
+                 📅 First Registration: {vehicle.DateOfFirstRegistration.Value}
+                 📅 Ukraine Registration: {vehicle.DateOfFirstRegistrationInUkraine.Value}
+                 🏷️ Make & Model: {vehicle.Make.Value} {vehicle.CommercialDescription.Value}
+                 📌 Type: {vehicle.Type.Value}
+                 🎨 Color: {vehicle.ColorOfVehicle.Value}
+
+                 Is this correct?
+                 """;
+
+            await bot.SendMessageWithKeyboard(
+                session.UserId,
+                text,
+                [[new KeyboardButton("✅ Yes"), new KeyboardButton("❌ No")]],
+                cancellationToken: cancellationToken);
+            session.Step++;
         }
-        catch (Exception)
+        catch
         {
             await bot.SendMessage(
                 session.UserId,
-                "⚠️ I couldn't read the vehicle ID. Please ensure it's well-lit and all text is clear.",
+                "⚠️ Couldn't read vehicle ID. Try again.",
                 cancellationToken: cancellationToken);
-
-            return;
         }
-
-        await bot.SendMessage(
-            session.UserId,
-            "Done! There is your documents summary: ",
-            cancellationToken: cancellationToken);
-
-        string summaryText = BuildSummaryText(session.MindeeDataExtractionResponse);
-
-        await bot.SendMessageWithKeyboard(
-            session.UserId,
-            summaryText,
-            new KeyboardButton[][] { ["✅ Yes", "❌ No"] },
-            cancellationToken: cancellationToken);
-
-        session.Step++;
     }
 
-    private async Task HandleStep3(
+    private async Task HandleVehicleIdConfirmationStep4(
+        ITelegramBotClient bot,
+        Update update,
+        UserSession session,
+        CancellationToken cancellationToken)
+    {
+        switch (update.Message?.Text)
+        {
+            case "✅ Yes":
+                await bot.SendMessage(
+                    session.UserId,
+                    "Great! Here is a summary of your data:",
+                    cancellationToken: cancellationToken);
+
+                string summary = BuildSummaryText(session.MindeeDataExtractionResponse);
+                await bot.SendMessage(
+                    session.UserId,
+                    summary,
+                    cancellationToken: cancellationToken);
+
+                session.Step++;
+                break;
+            case "❌ No":
+                await bot.SendMessage(
+                    session.UserId,
+                    "Please resend your vehicle ID photo.",
+                    cancellationToken: cancellationToken);
+                session.Step = 3;
+                break;
+            default:
+                await bot.SendMessage(
+                    session.UserId,
+                    "Please confirm with ✅ Yes or ❌ No.",
+                    cancellationToken: cancellationToken);
+                break;
+        }
+    }
+
+    private async Task HandleSummaryConfirmationStep5(
         ITelegramBotClient bot,
         Update update,
         UserSession session,
@@ -271,8 +336,12 @@ public class BotService
             case "✅ Yes":
                 await bot.SendMessageWithKeyboard(
                     session.UserId,
-                    "The insurance price is 100 USD.\nDo you confirm?",
-                    new KeyboardButton[][] { ["✅ Yes", "❌ No"] },
+                    """
+                    In fact of all data correctness please pay 100$ to obtain your insurance document.
+
+                    Do you agreed?
+                    """,
+                    [[new KeyboardButton("✅ Yes"), new KeyboardButton("❌ No")]],
                     cancellationToken: cancellationToken);
                 session.Step++;
                 break;
@@ -287,7 +356,7 @@ public class BotService
         }
     }
 
-    private async Task HandleStep4(
+    private async Task HandleFinalConfirmationStep6(
         ITelegramBotClient bot,
         Update update,
         UserSession session,
@@ -306,13 +375,18 @@ public class BotService
                     cancellationToken: cancellationToken);
                 session.Step = 0;
                 break;
-
             case "❌ No":
                 await bot.SendMessage(
                     session.UserId,
                     "Unfortunately, the price is fixed at 100 USD.",
                     cancellationToken: cancellationToken);
                 session.Step = 0;
+                break;
+            default:
+                await bot.SendMessage(
+                    session.UserId,
+                    "Please confirm with ✅ Yes or ❌ No.",
+                    cancellationToken: cancellationToken);
                 break;
         }
     }
