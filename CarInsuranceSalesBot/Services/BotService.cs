@@ -354,28 +354,38 @@ public class BotService
         UserSession session,
         CancellationToken cancellationToken)
     {
-        switch (update.Message?.Text)
+        string? text = update.Message?.Text?.Trim();
+
+        if (text == null)
+            return;
+
+        if (YesAnswers.Contains(text))
         {
-            case "✅ Yes":
-                await bot.SendMessageWithKeyboard(
-                    session.UserId,
-                    """
-                    In fact of all data correctness please pay 100$ to obtain your insurance document.
+            await bot.SendMessageWithKeyboard(
+                session.UserId,
+                """
+                In fact of all data correctness please pay 100$ to obtain your insurance document.
 
-                    Do you agreed?
-                    """,
-                    [[new KeyboardButton("✅ Yes"), new KeyboardButton("❌ No")]],
-                    cancellationToken: cancellationToken);
-                session.Step++;
-                break;
-
-            case "❌ No":
-                await bot.SendMessage(
-                    session.UserId,
-                    "Let's try again. Send photo of a passport",
-                    cancellationToken: cancellationToken);
-                session.Step = 1;
-                break;
+                Do you agreed?
+                """,
+                [[new KeyboardButton("✅ Yes"), new KeyboardButton("❌ No")]],
+                cancellationToken: cancellationToken);
+            session.Step++;
+        }
+        else if (NoAnswers.Contains(text))
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Let's try again. Send photo of a passport",
+                cancellationToken: cancellationToken);
+            session.Step = 1;
+        }
+        else
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Please confirm with ✅ Yes or ❌ No.",
+                cancellationToken: cancellationToken);
         }
     }
 
