@@ -45,6 +45,14 @@ public class BotService
     {
         if (update.Message is null) return;
 
+        string? messageText = update.Message.Text?.ToLowerInvariant();
+
+        if (!string.IsNullOrWhiteSpace(messageText) && IsGeneralQuestion(messageText))
+        {
+            await HandleGeneralQuestion(bot, update.Message.Chat.Id, messageText, cancellationToken);
+            return;
+        }
+
         UserSession session = _sessionManager.GetOrCreateUserSession(update.Message.Chat.Id);
 
         switch (session.Step)
@@ -65,6 +73,49 @@ public class BotService
                 await HandleStep4(bot, update, session, cancellationToken);
                 break;
         }
+    }
+
+    private static bool IsGeneralQuestion(string text)
+    {
+        return text.Contains("your purpose") ||
+               text.Contains("what can i do") ||
+               text.Contains("my data") ||
+               text.Contains("who are you") ||
+               text.Contains("are you safe") ||
+               text.Contains("data safe") ||
+               text.Contains("privacy") ||
+               text.Contains("help");
+    }
+
+    private async Task HandleGeneralQuestion(
+        ITelegramBotClient bot,
+        long chatId,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        string response;
+
+        if (question.Contains("your purpose") || question.Contains("who are you"))
+        {
+            response =
+                "🤖 I'm an assistant that helps you get car insurance by processing your passport and vehicle documents.";
+        }
+        else if (question.Contains("my data") || question.Contains("privacy") || question.Contains("data safe"))
+        {
+            response =
+                "🔒 Your data is processed only to generate the insurance policy. It is not shared or stored permanently.";
+        }
+        else if (question.Contains("what can i do") || question.Contains("help"))
+        {
+            response =
+                "📝 You can use this bot to generate a car insurance policy. Just send your passport photo and vehicle ID.";
+        }
+        else
+        {
+            response = "ℹ️ I'm here to help you get car insurance. Please send your passport to get started.";
+        }
+
+        await bot.SendMessage(chatId, response, cancellationToken: cancellationToken);
     }
 
     private async Task HandleStep0(
