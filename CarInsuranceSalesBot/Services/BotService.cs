@@ -15,6 +15,19 @@ public class BotService
     private readonly MindeeOcrService _ocrService;
     private readonly PdfPolicyGenerationService _pdfPolicyGenerationService;
 
+    private static readonly HashSet<string> YesAnswers =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "yes", "✅ yes", "y", "ok", "sure", "confirm", "confirmed", "👍", "да", "oui"
+        };
+
+    private static readonly HashSet<string> NoAnswers =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "no", "❌ no", "n", "cancel", "not sure", "nope", "✖", "нет", "non"
+        };
+
+
     public BotService(
         TelegramBotOptions options,
         UserSessionManager sessionManager,
@@ -205,28 +218,33 @@ public class BotService
         UserSession session,
         CancellationToken cancellationToken)
     {
-        switch (update.Message?.Text)
+        string? text = update.Message?.Text?.Trim();
+
+        if (text == null)
+            return;
+
+        if (YesAnswers.Contains(text))
         {
-            case "✅ Yes":
-                await bot.SendMessage(
-                    session.UserId,
-                    "Now please send a photo of your vehicle ID document.",
-                    cancellationToken: cancellationToken);
-                session.Step++;
-                break;
-            case "❌ No":
-                await bot.SendMessage(
-                    session.UserId,
-                    "Please send your passport photo again.",
-                    cancellationToken: cancellationToken);
-                session.Step = 1;
-                break;
-            default:
-                await bot.SendMessage(
-                    session.UserId,
-                    "Please confirm passport data with ✅ Yes or ❌ No.",
-                    cancellationToken: cancellationToken);
-                break;
+            await bot.SendMessage(
+                session.UserId,
+                "Now please send a photo of your vehicle ID document.",
+                cancellationToken: cancellationToken);
+            session.Step++;
+        }
+        else if (NoAnswers.Contains(text))
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Please send your passport photo again.",
+                cancellationToken: cancellationToken);
+            session.Step = 1;
+        }
+        else
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Please confirm passport data by replying ✅ Yes or ❌ No.",
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -250,7 +268,7 @@ public class BotService
             session.VehicleIdImageStream = await bot.DownloadFile(update.Message.Photo[^1].FileId, cancellationToken);
             await bot.SendMessage(
                 session.UserId,
-                "✅ Got your vehicle ID! Reading data...",
+                "✅ Got your vehicle ID! Reading data, wait a minute",
                 cancellationToken: cancellationToken);
 
             session.MindeeDataExtractionResponse.ExtractedVehicleIdData =
@@ -293,35 +311,40 @@ public class BotService
         UserSession session,
         CancellationToken cancellationToken)
     {
-        switch (update.Message?.Text)
+        string? text = update.Message?.Text?.Trim();
+
+        if (text == null)
+            return;
+
+        if (YesAnswers.Contains(text))
         {
-            case "✅ Yes":
-                await bot.SendMessage(
-                    session.UserId,
-                    "Great! Here is a summary of your data:",
-                    cancellationToken: cancellationToken);
+            await bot.SendMessage(
+                session.UserId,
+                "Great! Here is a summary of your data:",
+                cancellationToken: cancellationToken);
 
-                string summary = BuildSummaryText(session.MindeeDataExtractionResponse);
-                await bot.SendMessage(
-                    session.UserId,
-                    summary,
-                    cancellationToken: cancellationToken);
+            string summary = BuildSummaryText(session.MindeeDataExtractionResponse);
+            await bot.SendMessage(
+                session.UserId,
+                summary,
+                cancellationToken: cancellationToken);
 
-                session.Step++;
-                break;
-            case "❌ No":
-                await bot.SendMessage(
-                    session.UserId,
-                    "Please resend your vehicle ID photo.",
-                    cancellationToken: cancellationToken);
-                session.Step = 3;
-                break;
-            default:
-                await bot.SendMessage(
-                    session.UserId,
-                    "Please confirm with ✅ Yes or ❌ No.",
-                    cancellationToken: cancellationToken);
-                break;
+            session.Step++;
+        }
+        else if (NoAnswers.Contains(text))
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Please resend your vehicle ID photo.",
+                cancellationToken: cancellationToken);
+            session.Step = 3;
+        }
+        else
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Please confirm with ✅ Yes or ❌ No.",
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -362,32 +385,37 @@ public class BotService
         UserSession session,
         CancellationToken cancellationToken)
     {
-        switch (update.Message?.Text)
+        string? text = update.Message?.Text?.Trim();
+
+        if (text == null)
+            return;
+
+        if (YesAnswers.Contains(text))
         {
-            case "✅ Yes":
-                MemoryStream policyStream =
-                    _pdfPolicyGenerationService.GeneratePolicy(session.MindeeDataExtractionResponse);
-                await bot.SendDocument(
-                    session.UserId,
-                    policyStream,
-                    "insurance_policy.pdf",
-                    "Congratulation, there is your insurance policy",
-                    cancellationToken: cancellationToken);
-                session.Step = 0;
-                break;
-            case "❌ No":
-                await bot.SendMessage(
-                    session.UserId,
-                    "Unfortunately, the price is fixed at 100 USD.",
-                    cancellationToken: cancellationToken);
-                session.Step = 0;
-                break;
-            default:
-                await bot.SendMessage(
-                    session.UserId,
-                    "Please confirm with ✅ Yes or ❌ No.",
-                    cancellationToken: cancellationToken);
-                break;
+            MemoryStream policyStream =
+                _pdfPolicyGenerationService.GeneratePolicy(session.MindeeDataExtractionResponse);
+            await bot.SendDocument(
+                session.UserId,
+                policyStream,
+                "insurance_policy.pdf",
+                "Congratulation, there is your insurance policy",
+                cancellationToken: cancellationToken);
+            session.Step = 0;
+        }
+        else if (NoAnswers.Contains(text))
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Unfortunately, the price is fixed at 100 USD.",
+                cancellationToken: cancellationToken);
+            session.Step = 0;
+        }
+        else
+        {
+            await bot.SendMessage(
+                session.UserId,
+                "Please confirm with ✅ Yes or ❌ No.",
+                cancellationToken: cancellationToken);
         }
     }
 
