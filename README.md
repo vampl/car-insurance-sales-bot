@@ -84,18 +84,30 @@ car-insurance-sales-bot/
 
 ```plaintext
 👤 /start  
-🤖 Please send your passport photo.  
+🤖 👋 Hello! I’ll help you purchase car insurance.  
+    Please send a photo of your passport.  
 👤 [uploads passport]  
-🤖 ✅ Received. Now send your vehicle ID.  
+🤖 ✅ Got your passport!  
+    Extracted details:  
+    👤 Name: ТКАЧЕНКО МАР'ЯНА ІВАНІВНА  
+    🆔 Passport No: ХХ123456  
+🤖 Is this correct? (Yes / No)  
+👤 yes  
+🤖 Great! Now send a photo of your vehicle ID.  
 👤 [uploads vehicle ID]  
-🤖 ✅ Here's what I found:
-    👤 Name: ТКАЧЕНКО МАР'ЯНА ІВАНІВНА
-    🚗 Vehicle: TOYOTA CAMRY, Color: ЧОРНИЙ
-🤖 Confirm?  
-👤 ✅ Yes  
-🤖 Price: 100 USD. Proceed?  
-👤 ✅ Yes  
-🤖 🎉 Here is your policy: `insurance_policy.pdf`
+🤖 ✅ Got your vehicle ID!  
+    🚗 Make: TOYOTA  
+    🏷️ Model: CAMRY  
+    🎨 Color: ЧОРНИЙ  
+🤖 Is this correct? (Yes / No)  
+👤 confirm  
+🤖 Here's a summary of your data:  
+    👤 ТКАЧЕНКО МАР'ЯНА ІВАНІВНА  
+    🚗 TOYOTA CAMRY, Color: ЧОРНИЙ  
+🤖 Proceed with insurance for 100 USD?  
+👤 ok  
+🤖 🎉 Done! Here is your policy: `insurance_policy.pdf`
+
 ```
 
 ---
