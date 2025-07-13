@@ -14,6 +14,7 @@ public class BotService
     private readonly UserSessionManager _sessionManager;
     private readonly MindeeOcrService _ocrService;
     private readonly PdfPolicyGenerationService _pdfPolicyGenerationService;
+    private readonly MistralAiAskingService _mistralAiAskingService;
 
     private static readonly HashSet<string> YesAnswers =
         new(StringComparer.OrdinalIgnoreCase)
@@ -33,11 +34,13 @@ public class BotService
         UserSessionManager sessionManager,
         MindeeOcrService ocrService,
         PdfPolicyGenerationService pdfPolicyGenerationService,
+        MistralAiAskingService mistralAiAskingService,
         CancellationToken cancellationToken)
     {
         _sessionManager = sessionManager;
         _ocrService = ocrService;
         _pdfPolicyGenerationService = pdfPolicyGenerationService;
+        _mistralAiAskingService = mistralAiAskingService;
 
         _botClient = new TelegramBotClient(token: options.BotToken, cancellationToken: cancellationToken);
     }
@@ -58,83 +61,81 @@ public class BotService
     {
         if (update.Message is null) return;
 
-        string? messageText = update.Message.Text?.ToLowerInvariant();
-
-        if (!string.IsNullOrWhiteSpace(messageText) && IsGeneralQuestion(messageText))
-        {
-            await HandleGeneralQuestion(bot, update.Message.Chat.Id, messageText, cancellationToken);
-            return;
-        }
-
         UserSession session = _sessionManager.GetOrCreateUserSession(update.Message.Chat.Id);
+
+        if (!string.IsNullOrWhiteSpace(update.Message.Text))
+        {
+            var lower = update.Message.Text.ToLowerInvariant();
+
+            if (!YesAnswers.Contains(lower) && !NoAnswers.Contains(lower))
+            {
+                if (!IsStructuredInputExpected(update))
+                {
+                    // Send to AI
+                    await HandleGeneralQuestion(bot, update, session, cancellationToken);
+                    return;
+                }
+            }
+        }
 
         switch (session.Step)
         {
             case 0:
                 await HandleStartStep0(bot, session, cancellationToken);
-                break;
+                return;
             case 1:
                 await HandlePassportObtainingStep1(bot, update, session, cancellationToken);
-                break;
+                return;
             case 2:
                 await HandlePassportConfirmationStep2(bot, update, session, cancellationToken);
-                break;
+                return;
             case 3:
                 await HandleVehicleIdObtainingStep3(bot, update, session, cancellationToken);
-                break;
+                return;
             case 4:
                 await HandleVehicleIdConfirmationStep4(bot, update, session, cancellationToken);
-                break;
+                return;
             case 5:
                 await HandleSummaryConfirmationStep5(bot, update, session, cancellationToken);
-                break;
+                return;
             case 6:
                 await HandleFinalConfirmationStep6(bot, update, session, cancellationToken);
-                break;
+                return;
         }
     }
 
-    private static bool IsGeneralQuestion(string text)
+    private bool IsStructuredInputExpected(Update update)
     {
-        return text.Contains("your purpose") ||
-               text.Contains("what can i do") ||
-               text.Contains("my data") ||
-               text.Contains("who are you") ||
-               text.Contains("are you safe") ||
-               text.Contains("data safe") ||
-               text.Contains("privacy") ||
-               text.Contains("help");
+        if (update.Message is null)
+            return false;
+
+        // During Step 1 or 3 we expect a photo, ignore AI response
+        if (update.Message.Photo != null)
+            return true;
+
+        // Only expect structured input if message is Yes/No
+        string? text = update.Message.Text;
+        if (text is null)
+            return false;
+
+        // Ignore commands
+        if (text.StartsWith('/'))
+            return true;
+
+        return YesAnswers.Contains(text) || NoAnswers.Contains(text);
     }
 
     private async Task HandleGeneralQuestion(
         ITelegramBotClient bot,
-        long chatId,
-        string question,
+        Update update,
+        UserSession session,
         CancellationToken cancellationToken)
     {
-        string response;
+        string response =
+            await _mistralAiAskingService.AskAsync(
+                $"Answer this car insurance-related question in a helpful and friendly tone: {update.Message?.Text}");
 
-        if (question.Contains("your purpose") || question.Contains("who are you"))
-        {
-            response =
-                "🤖 I'm an assistant that helps you get car insurance by processing your passport and vehicle documents.";
-        }
-        else if (question.Contains("my data") || question.Contains("privacy") || question.Contains("data safe"))
-        {
-            response =
-                "🔒 Your data is processed only to generate the insurance policy. It is not shared or stored permanently.";
-        }
-        else if (question.Contains("what can i do") || question.Contains("help"))
-        {
-            response =
-                "📝 You can use this bot to generate a car insurance policy. Just send your passport photo and vehicle ID.";
-        }
-        else
-        {
-            response = "ℹ️ I'm here to help you get car insurance. Please send your passport to get started.";
-        }
-
-        await bot.SendMessage(chatId, response, cancellationToken: cancellationToken);
+        await bot.SendMessage(session.UserId, response, cancellationToken: cancellationToken);
     }
 
     private async Task HandleStartStep0(
