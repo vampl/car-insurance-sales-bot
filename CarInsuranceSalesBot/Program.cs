@@ -26,10 +26,19 @@ MindeeOptions mindeeOptions =
             throw new InvalidOperationException(message: "Mindee API key is missing")
     };
 
+MistralOptions mistralOptions =
+    new()
+    {
+        ApiKey =
+            configuration["Mistral:ApiKey"] ??
+            throw new InvalidOperationException(message: "Mistral API key is missing")
+    };
+
 // service registration
 CancellationTokenSource cts = new();
 
 UserSessionManager sessionManager = new();
+MistralAiAskingService aiAskingService = new(mistralOptions);
 MindeeOcrService ocrService = new(mindeeOptions);
 PdfPolicyGenerationService pdfPolicyGenerationService = new();
 
@@ -39,6 +48,7 @@ BotService service =
         sessionManager,
         ocrService,
         pdfPolicyGenerationService,
+        aiAskingService,
         cancellationToken: cts.Token);
 
 // start application core service
