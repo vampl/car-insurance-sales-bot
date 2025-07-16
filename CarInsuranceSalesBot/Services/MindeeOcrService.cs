@@ -45,7 +45,7 @@ public class MindeeOcrService
 
     public async Task<MindeeDataExtractionResponse.VehicleId> ExtractVehicleIdAsync(MemoryStream vehicleIdStream)
     {
-        CustomEndpoint passportEndpoint = new(endpointName: "vehicle_id", accountName: "vampl", "v1");
+        CustomEndpoint passportEndpoint = new(endpointName: "vehicle_registration_certeficate", accountName: "vampl", "v1");
 
         Task<AsyncPredictResponse<GeneratedV1>>? vehicleIdOcrTask =
             _client.EnqueueAndParseAsync<GeneratedV1>(
