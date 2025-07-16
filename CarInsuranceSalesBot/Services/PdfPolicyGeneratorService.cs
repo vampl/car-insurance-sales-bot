@@ -33,10 +33,7 @@ public class PdfPolicyGenerationService
 
         // 2. Vehicle Information
         WriteLine("2. Vehicle Information", headerFont, 20);
-        WriteLine(
-            $"Make & Model: {data.ExtractedVehicleIdData.Make.Value} {
-                data.ExtractedVehicleIdData.CommercialDescription.Value}",
-            font);
+        WriteLine($"Make: {data.ExtractedVehicleIdData.Make.Value}", font);
         WriteLine($"VIN: {data.ExtractedVehicleIdData.RegistrationNumber.Value}");
         WriteLine("Usage: Personal");
         y += 10;
