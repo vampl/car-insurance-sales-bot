@@ -8,7 +8,7 @@ public class MindeeDataExtractionResponse
     public class PredictionField
     {
         [JsonProperty("value")]
-        public required string Value { get; set; }
+        public required string? Value { get; set; }
     }
     
     [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
@@ -35,20 +35,16 @@ public class MindeeDataExtractionResponse
     public class VehicleId
     {
         public required PredictionField RegistrationNumber { get; set; }
-
-        public required PredictionField RegistrationData { get; set; }
-
-        public required PredictionField DateOfFirstRegistration { get; set; }
-
-        public required PredictionField DateOfFirstRegistrationInUkraine { get; set; }
-
+        
+        public required PredictionField VehicleIdentificationNumber { get; set; }
+        
         public required PredictionField Make { get; set; }
 
         public required PredictionField Type { get; set; }
 
-        public required PredictionField CommercialDescription { get; set; }
-
-        public required PredictionField ColorOfVehicle { get; set; }
+        public required PredictionField YearOfManufacture { get; set; }
+        
+        public required PredictionField Ownership { get; set; }
     }
 
     public Passport ExtractedPassportData { get; set; } = null!;
