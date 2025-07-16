@@ -184,18 +184,7 @@ public class BotService
                 await _ocrService.ExtractPassportAsync(session.PassportImageStream);
 
             MindeeDataExtractionResponse.Passport passport = session.MindeeDataExtractionResponse.ExtractedPassportData;
-            string text =
-                $"""
-                 📄 Passport Information:
-                 👤 Name: {passport.Surname.Value} {passport.Name.Value} {passport.Patronymic.Value}
-                 🆔 Record No: {passport.RecordNo.Value}
-                 🎂 DOB: {passport.DateOfBirth.Value}
-                 👫 Sex: {passport.Sex.Value}
-                 📅 Issued: {passport.DateOfExpiry.Value}
-                 🌍 Nationality: {passport.Nationality.Value}
-
-                 Is this correct?
-                 """;
+            string text = SummaryBuilder.BuildPassportInfoString(passport);
 
             await bot.SendMessageWithKeyboard(
                 session.UserId,
@@ -277,18 +266,7 @@ public class BotService
 
             MindeeDataExtractionResponse.VehicleId
                 vehicle = session.MindeeDataExtractionResponse.ExtractedVehicleIdData;
-            string text =
-                $"""
-                 🚗 Vehicle Information:
-                 🔢 Reg Number: {vehicle.RegistrationNumber.Value}
-                 📅 First Registration: {vehicle.DateOfFirstRegistration.Value}
-                 📅 Ukraine Registration: {vehicle.DateOfFirstRegistrationInUkraine.Value}
-                 🏷️ Make & Model: {vehicle.Make.Value} {vehicle.CommercialDescription.Value}
-                 📌 Type: {vehicle.Type.Value}
-                 🎨 Color: {vehicle.ColorOfVehicle.Value}
-
-                 Is this correct?
-                 """;
+            string text = SummaryBuilder.BuildVehicleInfoString(vehicle);
 
             await bot.SendMessageWithKeyboard(
                 session.UserId,
@@ -436,26 +414,10 @@ public class BotService
         MindeeDataExtractionResponse.Passport passport = data.ExtractedPassportData;
         MindeeDataExtractionResponse.VehicleId vehicleId = data.ExtractedVehicleIdData;
 
-        return $"""
-                Here’s what I found
-                📄 Passport Information:
-                👤 Full Name: {passport.Surname.Value} {passport.Name.Value} {passport.Patronymic.Value}
-                🆔 Record No: {passport.RecordNo.Value}
-                👫 Sex: {passport.Sex.Value}
-                🎂 Date of Birth: {passport.DateOfBirth.Value}
-                📅 Issued On: {passport.DateOfExpiry.Value}
-                🌍 Nationality: {passport.Nationality.Value}
-
-                🚗 Vehicle Information:
-                🔢 Reg Number: {vehicleId.RegistrationNumber.Value}
-                📅 First Registration: {vehicleId.DateOfFirstRegistration.Value}
-                📅 Ukraine Registration: {vehicleId.DateOfFirstRegistrationInUkraine.Value}
-                🏷️ Make & Model: {vehicleId.Make.Value} {vehicleId.CommercialDescription.Value}
-                📌 Type: {vehicleId.Type.Value}
-                🎨 Color: {vehicleId.ColorOfVehicle.Value}
-
-                Do you confirm?
-                """;
+        return string.Join(
+            "\n\n",
+            SummaryBuilder.BuildPassportInfoString(passport),
+            SummaryBuilder.BuildVehicleInfoString(vehicleId));
     }
 
     private Task ErrorHandlerAsync(
