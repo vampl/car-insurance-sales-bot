@@ -34,7 +34,9 @@ RUN apt-get update && \
         fonts-dejavu-core \
         fonts-liberation \
         fontconfig && \
+    fc-cache -f -v && \
     rm -rf /var/lib/apt/lists/*
+
 
 # create appication folder
 WORKDIR /app
