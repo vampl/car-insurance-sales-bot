@@ -12,9 +12,9 @@ public class PdfPolicyGenerationService
         var document = new PdfDocument();
         PdfPage? page = document.AddPage();
         var gfx = XGraphics.FromPdfPage(page);
-        var font = new XFont("Arial", 10);
-        var boldFont = new XFont("Arial", 10, XFontStyle.Bold);
-        var headerFont = new XFont("Arial", 14, XFontStyle.Bold);
+        XFont font = new("Liberation Sans", 10, XFontStyle.Regular, new XPdfFontOptions(PdfFontEncoding.Unicode));
+        XFont boldFont = new("Liberation Sans", 10, XFontStyle.Bold, new XPdfFontOptions(PdfFontEncoding.Unicode));
+        XFont headerFont = new("Liberation Sans", 14, XFontStyle.Bold, new XPdfFontOptions(PdfFontEncoding.Unicode));
 
         int y = 40;
 
@@ -91,7 +91,7 @@ public class PdfPolicyGenerationService
 
         void WriteLine(string text, XFont? textFont = null, int spacing = 15)
         {
-            textFont ??= new XFont("Arial", 10);
+            textFont ??= new XFont("Liberation Sans", 10, XFontStyle.Regular, new XPdfFontOptions(PdfFontEncoding.Unicode));
 
             gfx.DrawString(text, textFont, XBrushes.Black, new XPoint(40, y));
             y += spacing;
